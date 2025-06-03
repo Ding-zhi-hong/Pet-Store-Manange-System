@@ -17,6 +17,91 @@ public class FileUtils {
     private static final String FILE_NAME = "pets.csv";
     private static final String DELIMITER = "‖";  // 使用竖线符号作为分隔符
     private static final String ESCAPE = "\\\\";    // 转义字符
+    private static final Path USER_FILE = Paths.get("users.csv");
+
+    public static boolean registerUser(User user) {
+        try {
+            // 确保文件存在
+            if (!Files.exists(USER_FILE)) {
+                Files.createFile(USER_FILE);
+            }
+
+            // 检查用户名是否已存在
+            if (isUsernameTaken(user.getUsername())) {
+                return false; // 用户名已被占用
+            }
+
+            // 追加新用户到文件
+            try (BufferedWriter writer = Files.newBufferedWriter(USER_FILE,
+                    java.nio.file.StandardOpenOption.APPEND)) {
+                writer.write(user.getUsername() + "," + user.getPassword() + "\n");
+            }
+
+            return true;
+        } catch (IOException ex) {
+            System.err.println("用户注册失败: " + ex.getMessage());
+            return false;
+        }
+    }
+
+    // 检查用户名是否已存在
+    private static boolean isUsernameTaken(String username) throws IOException {
+        return loadUsersFromFile().stream()
+                .anyMatch(u -> u.getUsername().equals(username));
+    }
+
+    // 从文件加载所有用户
+    public static List<User> loadUsersFromFile() {
+        List<User> users = new ArrayList<>();
+
+        try {
+            if (Files.exists(USER_FILE)) {
+                try (BufferedReader reader = Files.newBufferedReader(USER_FILE)) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String[] parts = line.split(",", 2);
+                        if (parts.length == 2) {
+                            users.add(new User(parts[0], parts[1]));
+                        }
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            System.err.println("加载用户数据失败: " + ex.getMessage());
+        }
+
+        return users;
+    }
+    // 注销用户（从文件中删除）
+    public static boolean deleteUser(User userToDelete) {
+        List<User> users = loadUsersFromFile();
+
+        // 查找并移除对应用户
+        boolean removed = users.removeIf(user ->
+                user.getUsername().equals(userToDelete.getUsername()));
+
+        if (removed) {
+            // 重写整个文件
+            try (BufferedWriter writer = Files.newBufferedWriter(USER_FILE)) {
+                for (User user : users) {
+                    writer.write(user.getUsername() + "," + user.getPassword() + "\n");
+                }
+                return true;
+            } catch (IOException ex) {
+                System.err.println("删除用户失败: " + ex.getMessage());
+            }
+        }
+
+        return false;
+    }
+
+
+
+
+
+
+
+
 
     public static void savePetsToFile(List<Pet> pets) {
         try (PrintWriter writer = new PrintWriter(FILE_NAME)) {

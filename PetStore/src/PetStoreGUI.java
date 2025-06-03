@@ -31,14 +31,8 @@ public class PetStoreGUI {
             FileUtils.savePetsToFile(pets);
         }
 
-        users = new ArrayList<>();
+        users = FileUtils.loadUsersFromFile();
         users.add(new Admin("admin", "admin123"));
-        users.add(new User("user1", "password"));
-        users.add(new User("user2", "password"));
-        users.add(new User("user3", "password"));
-        users.add(new User("user4", "password"));
-        users.add(new User("user5", "password"));
-
         initialize();
     }
 
@@ -102,6 +96,7 @@ public class PetStoreGUI {
                 String password = new String(passwordField.getPassword());
                 if (!username.isEmpty() && !password.isEmpty()) {
                     users.add(new User(username, password));
+                    FileUtils.registerUser(new User(username, password));
                     JOptionPane.showMessageDialog(frame, "Registration successful!");
                 }
             }
@@ -117,6 +112,7 @@ public class PetStoreGUI {
                     for (User use : users) {
                         if (use.getUsername().equals(username) && use.getPassword().equals(password) ) {
                             users.remove(use);
+                            FileUtils.deleteUser(new User(username, password));
                             JOptionPane.showMessageDialog(frame, "Deletion successful!");
                         }
                     }
